@@ -1,16 +1,31 @@
-using FinnHubAssignment;
-using ServiceContract;
-using Services;
+using Microsoft.EntityFrameworkCore;
+using WebAPIAssignment.DBContext;
+using WebAPIAssignment.Repositories;
+using WebAPIAssignment.RepositoryContracts;
+using WebAPIAssignment.ServiceContracts;
+using WebAPIAssignment.Services.OrderService;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddHttpClient();
+
+// Add services to the container.
 builder.Services.AddControllers();
-builder.Services.Configure<TradingOption>(builder.Configuration.GetSection("TradingOptions"));
-builder.Services.AddSingleton<IFinnhubService, FinnhubService>();
-builder.Services.AddSingleton<IStocksService, StocksService>();
+builder.Services.AddDbContext<OrderDbContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
+});
+builder.Services.AddScoped<IOrderAdderService,AddOrderService>();
+builder.Services.AddScoped<IOrderDeleterService, DeleteOrderService>();
+builder.Services.AddScoped<IOrderGetterService, GetOrderService>();
+builder.Services.AddScoped<IOrderUpdateService, UpdateOrderService>();
+
+builder.Services.AddScoped<IOrdersRepository, OrdersRepository>();
+builder.Services.AddScoped<IOrderItemsRepository, OrderItemsRepository>();
 
 var app = builder.Build();
-app.MapControllers();
-//app.MapGet("/", () => "Hello World!");
 
+// Configure the HTTP request pipeline.
+app.UseExceptionHandler("/Error");
+app.UseHsts();
+app.UseHttpsRedirection();
+app.MapControllers();
 app.Run();
